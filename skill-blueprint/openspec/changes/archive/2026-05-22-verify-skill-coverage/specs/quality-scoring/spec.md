@@ -1,9 +1,9 @@
-# Spec: 质量评分 (Quality Scoring)
+# Delta Spec: 质量评分 (Quality Scoring)
 
-> 统一评分体系，同时覆盖 Stage 1 设计评分（5 维度）和 Stage 3 评估评分（6 维度）。
-> 两阶段共用相同的评分公式和严重度体系，差异仅在检查维度数量和检查项内容。
+> 扩展为同时覆盖 Stage 1 设计评分（5 维度）和 Stage 3 评估评分（6 维度）。
+> 两者共用相同的评分公式和严重度体系，差异仅在检查维度数量和检查项内容。
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: 5 维度设计评分体系（Stage 1）
 系统 SHALL 按 5 个设计维度对 skill 进行评分：结构合规性、脚本分离度、自校验机制、降级健壮性、知识可沉淀性。每维度包含 3-4 个检查项。本评分体系用于 Stage 1 蓝图设计审查。

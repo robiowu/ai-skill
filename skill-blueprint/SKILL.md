@@ -50,7 +50,7 @@ description: Skill 全生命周期管理元 Skill。覆盖蓝图设计、落地�
 | 8 | 反模式自检 | 执行中对照反模式表，主动纠偏 |
 | 9 | 复杂流程分治 | 大批量、强流程任务使用 subagent 拆解 + 本地 md 追踪进度 |
 
-**原则 9 特别说明**：当被设计的 skill 本身涉及大批量操作、强流程依赖、且不适合纯脚本固化时，应在设计中纳入 subagent 拆解和本地 md 进度追踪机制。详见 `references/complex-workflow-guide.md`。
+**原则 9 特别说明**：当被设计的 skill 本身涉及大批量操作、强流程依赖、且不适合纯脚本固化时，应在设计中纳入 subagent 拆解和本地 md 进度追踪机制。详见 `references/complex-workflow-guide.md`。形式化规范：`openspec/specs/complex-workflow-decomposition/spec.md`。
 
 ---
 
@@ -92,7 +92,7 @@ description: Skill 全生命周期管理元 Skill。覆盖蓝图设计、落地�
 
 ### Phase 1.3: 范式审查
 
-按 8 条核心原则逐项审查当前设计（或用户描述）。审查时读取 `references/design-patterns.md` 获取详细判定标准。
+按 9 条核心原则逐项审查当前设计（或用户描述）。审查时读取 `references/design-patterns.md` 获取详细判定标准。
 
 与「原则 9 复杂流程分治」相关的审查：
 - 被设计 skill 是否涉及 ≥5 个串行步骤？
@@ -127,6 +127,7 @@ description: Skill 全生命周期管理元 Skill。覆盖蓝图设计、落地�
 ## Stage 2: 落地实现
 
 > 目标：将设计蓝图转化为可执行的 skill 文件。
+> 形式化规范：`openspec/specs/implementation-execution/spec.md`
 
 ### Phase 2.1: 创建目录结构
 
@@ -232,6 +233,7 @@ Subagent 执行子任务 → 结果摘要写入 md → 主线读取摘要继续�
 ## Stage 3: 整体评估
 
 > 目标：对已实现的 skill 进行执行层面审查，输出质量评分和改进建议。
+> 形式化规范：`openspec/specs/evaluation-review/spec.md`
 
 ### Phase 3.1: 结构审查
 

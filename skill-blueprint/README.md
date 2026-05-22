@@ -95,6 +95,7 @@ skill-blueprint/
 | **diffscope** | 12 步工作流门控、降级处理、案例库驱动、自我复核、时间盒约束 |
 | **diffscope 案例库** | 触发模式匹配（可机械匹配）、可操作检查规则（找到 X → 比对 Y → 判断 Z） |
 | **上下文膨胀经验** | subagent 拆解 + progress.md 追踪（v2 新增原则 9） |
+| **spec 覆盖** | 7 个 spec 覆盖全生命周期：`design-review`（Stage 1 设计审查）、`quality-scoring`（两阶段统一评分）、`knowledge-codification`（知识沉淀）、`template-generation`（模板生成）、`implementation-execution`（Stage 2 实现规范）、`evaluation-review`（Stage 3 评估规范）、`complex-workflow-decomposition`（原则 9 分治规范） |
 
 ## 快速开始
 

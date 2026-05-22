@@ -4,6 +4,44 @@
 
 ---
 
+## 零、需求澄清与前置调研
+
+> 参考：skill-creator L47-60
+
+在进入 SKILL.md 编写之前，必须完成需求澄清。跳过此步骤直接开始写是 skill 实现失败的常见原因。
+
+### 0.1 从对话历史提取意图
+
+当用户在前文已详细描述 skill 需求时（如连续多轮讨论），系统应从对话历史提取：
+
+| 应提取的信息 | 提取方法 |
+|---|---|
+| Skill 目标 | 用户最初提出的问题或需求 |
+| 详细步骤序列 | 对话中描述的流程和用户纠正过的点 |
+| 输入/输出格式 | 用户提供的示例或描述 |
+| 约束条件 | 用户强调的"必须"、"不要"、"注意" |
+
+提取后整理为结构化列表，请用户确认，**不做重复访谈**。
+
+### 0.2 四个核心澄清问题
+
+当用户只给出模糊意图（如"帮我写一个 skill"），按优先级逐一询问：
+
+1. **Skill 要解决什么问题？** —— 明确目标和适用范围
+2. **一般用什么话触发它？** —— 影响 description 的触发关键词设计
+3. **期望输出什么格式？** —— 文件/报告/代码/命令？结构是什么？
+4. **是否需要测试用例？** —— 输出可客观验证（Generator、Pipeline）→ 建议建立测试；输出主观（写作风格、设计审美）→ 测试通常不需要
+
+### 0.3 MCP 并行调研策略
+
+在编写 SKILL.md 前，可使用 MCP 工具或文档集通过 subagent 并行调研：
+
+- 如果 skill 需要调用 MCP 服务 → 确认这些服务在当前环境可用
+- 如果有示例文件 → 先读取和理解示例文件的结构
+- 如果没有可用 MCP 工具，且判断用户可能不了解某些技术细节 → 带上下文准备后提问（"根据我对 X 的理解，应该是 Y，对吗？"），而非将开放式问题抛给用户
+
+---
+
 ## 一、SKILL.md 编写规范
 
 ### 1.1 Frontmatter
@@ -99,7 +137,43 @@ description: 一个 skill
 - 领域知识 → 移到 `references/knowledge-xxx.md`
 - 案例 → 移到 `cases/CASE-xxx.md`
 
-### 1.6 参考文件索引
+### 1.6 Progressive Disclosure 三层加载模型
+
+> 参考：skill-creator L86-108
+
+skill-creator 的架构核心：SKILL.md 不应是一个自包含的巨无霸文档，而应按三层加载模型组织内容，确保 AI 在不同阶段只加载需要的内容。
+
+**三层结构**：
+
+| 层级 | 内容 | 何时加载 | 约束 |
+|------|------|----------|------|
+| **元数据层** | name + description | 始终在上下文 | 约 100 字，含触发关键词 |
+| **正文层** | SKILL.md body | skill 触发时加载 | 目标 < 500 行，保留核心工作流 + 选择逻辑 |
+| **资源层** | references/、scripts/、assets/ | 按需加载（AI 决定读取哪些文件） | 无上限，具体领域知识、检查清单、模板放这里 |
+
+**为什么重要**：当前的 LLM 上下文窗口虽然很大（128K+），但实际有效注意力仍然有限。skill-creator 的三层加载确保了：
+- 高优先级信息始终在上下文（元数据层）
+- 核心工作流入门快（正文层 < 500 行）
+- 细节不占用注意力除非需要（资源层按需加载）
+
+**Domain Organization 模式**：
+
+当 skill 需要支持多个领域/框架时，使用 Domain organization 模式：
+
+```
+skill-name/
+├── SKILL.md                  # 通用工作流 + 平台选择逻辑
+└── references/
+    ├── aws.md                # AWS 具体流程
+    ├── gcp.md                # GCP 具体流程
+    └── azure.md              # Azure 具体流程
+```
+
+SKILL.md 保留通用步骤，具体平台知识按文件分到 references/，让 AI 只读取相关文件，避免加载所有平台的实现细节。
+
+**大 reference 文件加目录**：reference 文件超过 300 行时，应在文件头部添加目录（TOC），方便 AI 快速定位。
+
+### 1.7 参考文件索引 参考文件索引
 
 SKILL.md 末尾必须有索引表：
 
@@ -111,6 +185,49 @@ SKILL.md 末尾必须有索引表：
 | `references/xxx.md` | 简短说明 | 在 Phase X 执行时 |
 | `scripts/xxx.py` | 简短说明 | 用法: `python xxx.py --input ...` |
 ```
+
+### 1.8 Writing Patterns
+
+> 参考：skill-creator L119-135
+
+**输出模板声明模式**：当 skill 需要输出特定格式时，使用 `## Report structure` + `ALWAYS` 声明模板：
+
+```markdown
+## Report structure
+
+审查完成后 **ALWAYS** 按以下模板输出报告：
+
+### 基本信息
+- **Skill 名称**: xxx
+- **类型**: Generator / Reviewer / ...
+
+### 类型识别与匹配度
+| 类型 | 匹配度 | 依据 |
+|------|:------:|------|
+| xxx | 🟢 高 | ... |
+
+### 维度评估表
+| 维度 | 检查项 | 结果 | 说明 |
+|------|--------|:----:|------|
+| 结构合规性 | 步骤分离 | ✅ | ... |
+```
+
+**Input/Output 示例格式**：在 SKILL.md 中提供正例和反例，帮助 AI 理解期望行为：
+
+```markdown
+**Example 1:**
+Input: 帮我设计一个代码审查 skill，要能检查安全和性能问题
+Output: [期望的输出格式和内容]
+
+**Example 2:**
+Input: 写一个 skill
+Output: [此时应触发澄清问题，而非直接输出设计]
+```
+
+**要点**：
+- 模板声明放在 SKILL.md 末尾而非开头——AI 在触发时先读取工作流，处理完毕后再查模板
+- 至少提供 2 个示例（1 个简单 + 1 个复杂）
+- 示例要真实——用项目内实际会出现的输入
 
 ---
 
@@ -300,12 +417,139 @@ skill-name/
 - 无"无限循环"路径
 - 每个 ❌ 分支有明确的终止或降级行为
 
-### 4.4 迭代修正
+### 4.4 并行测试执行模型
 
-发现问题后按优先级：
+> 参考：skill-creator L163-289
+
+skill-creator 使用 subagent 并行执行模型来定量测试 skill 效果。其核心思想是：同时运行两个 subagent——一个加载 skill（with-skill），一个不加载（baseline）——对比输出差异，量化 skill 的实际增益。
+
+**测试架构**：
+
+```
+evals.json (定义测试用例)
+    │
+    ├── subagent (with-skill)    ─┐
+    │   └── timing.json            │
+    │                              ├── grader (评估 assertions)
+    ├── subagent (baseline)      ─┘
+    │   └── timing.json
+    │
+    └── aggregate_benchmark (汇总统计量)
+            │
+            └── generate_review.py (启动可视化 viewer)
+```
+
+**evals.json 格式**：
+
+```json
+[
+  {
+    "prompt": "真实场景的用户输入，如'帮我写一个代码审查 skill'",
+    "expected_output": "期望输出特征或关键内容描述",
+    "assertions": [
+      {"type": "contains", "value": "维度评估表"},
+      {"type": "not_contains", "value": "TODO"},
+      {"type": "length_gt", "value": 200}
+    ]
+  }
+]
+```
+
+需要 2-3 个真实 prompt，覆盖典型使用场景和边界情况。
+
+**assertions 类型**：
+- `contains`：输出必须包含指定文本
+- `not_contains`：输出不得包含指定文本（如占位符、硬编码密钥）
+- `length_gt` / `length_lt`：输出长度约束
+- `file_exists`：指定文件必须产出
+- `regex`：输出匹配正则表达式
+
+**timing.json 捕获**：每次子任务执行记录 token 消耗和耗时，用于对比 with-skill 和 baseline 的效率差异。
+
+**grading → aggregation → viewer 流程**：
+1. grader 评估每个 assertion 的通过/失败
+2. aggregate_benchmark 汇总所有测试用例的统计量（通过率、平均 token 差、平均耗时差）
+3. generate_review.py 启动本地可视化 viewer，展示对比结果
+
+**适用场景**：
+- Generator 型 skill：输出可客观验证（文件内容、数据结构）→ 使用定量 assertions
+- Reviewer 型 skill：输出为主观判断 → 创建 2-3 个测试 prompt（包含反例），用人工评审替代定量 assertions
+
+> **注意**：这需要使用 skill-creator 的 scripts 和 agents 体系（如 `agents/grader.md`、`scripts/aggregate_benchmark.py`）。skill-blueprint 提供指导和规范，skill-creator 提供执行工具链。
+
+### 4.5 迭代修正
+
+> 参考：skill-creator L292-321
+
+发现问题后按严重度处理：
 1. Error（阻塞性）→ 立即修复
 2. Warning（偏离性）→ 评估后修复
 3. Info（优化性）→ 记录后按需修复
+
+**skill-creator 的四条改进哲学**：
+
+#### （一）Generalize from feedback —— 从反馈中抽象通用模式
+
+基于测试反馈修改 SKILL.md 时，修改应是**通用性**的，而非针对单个测试用例的过拟合。
+
+**反例**（❌ 针对单个测试用例做特判）：
+```
+如果输入是"帮我写一个代码审查 skill"，则额外输出类型识别表。
+```
+
+**正例**（✅ 抽象为通用规则）：
+```
+所有设计审查输出必须包含类型识别表——无论用户输入的措辞如何。
+```
+
+**判断标准**：修改后问自己——"这个修改对下一个新的、完全不同的测试用例也适用吗？"
+
+#### （二）Keep prompt lean —— 保持 prompt 精瘦
+
+删除不产生实际效果的冗余指令。每增加一行 prompt 都要问：
+
+- 这行指令真的改变了 AI 的行为吗？
+- 还是只是重申了 AI 本来就会做的事情？
+- 如果没有这行，输出会明显不同吗？
+
+如果答案都是"否"，删除这行。
+
+**常见冗余**：
+- "请仔细分析"（AI 本来就会分析）
+- "确保输出格式正确"（没有指定什么是正确）
+- 重复声明已经在前文写过的约束
+
+#### （三）Explain the why —— 解释为什么
+
+用原理性语言替代刚性 MUST：
+
+```
+好的：因为 AI 在长上下文末尾容易遗忘早期指令，所以每步执行前回顾全局原则。
+坏的：你 **MUST** 在每一步前回顾全局原则！
+```
+
+今天的 LLM 有良好的心理模型——解释**为什么重要**比刚性约束更有效。
+
+#### （四）Detect repeated work —— 检测重复劳动
+
+观察测试执行记录，发现重复模式：
+
+- 如果所有测试用例中 AI 都独立写了相同的辅助脚本 → 固化到 `scripts/` 中
+- 如果所有测试用例中 AI 都重复查询相同的文档 → 外置到 `references/` 中
+- 如果某个固定格式被反复生成 → 创建模板
+
+**核心原则**：AI 做了两次的事情，第三次应该自动化。
+
+---
+
+**改进后验证流程**：
+
+每次改进后，重新运行**全部**测试用例（含 baseline），使用 `--previous-workspace` 对比迭代前后的变化：
+
+1. 修改 SKILL.md
+2. 重新跑全部测试（with-skill + baseline 并行 subagent）
+3. 用 `--previous-workspace` 对比：哪些 assertion 从 ❌ 变 ✅、token 消耗增减、输出质量变化
+4. 如果连续 2 轮无显著改善 → 可能的设计问题（职责边界过宽、核心流程设计有误），建议回到 Stage 1 重新审视设计
 
 ---
 
@@ -323,8 +567,16 @@ skill-name/
 
 1. 确认目录结构完整
 2. 运行最终的结构测试和流程模拟
-3. 输出最终目录树
-4. 提示用户进入 Stage 3 整体评估或直接使用
+3. 使用 skill-creator 的打包工具产出安装包：
+
+```
+python -m scripts.package_skill <skill-path>
+```
+
+> 参考：skill-creator L408-416。此命令验证 skill 结构完整性，产出 `.skill` 安装包路径。
+
+4. 输出最终目录树
+5. 提示用户进入 Stage 3 整体评估或直接使用
 
 ### 5.3 目录树输出示例
 
@@ -344,3 +596,59 @@ skill-name/
     ├── CASE-001-cache-key.md             # 缓存键模式
     └── CASE-002-type-discriminator.md    # 类型判别模式
 ```
+
+---
+
+## 六、Description 优化
+
+> 参考：skill-creator L332-404
+
+Description 是 skill 的"触发开关"。过长会被截断，过短缺乏区分度。按以下流程系统优化 description 的触发准确率。
+
+### 6.1 评估查询设计
+
+生成 20 条评估查询，分为两组：
+
+**Should-trigger（8-10 条）**：应该触发 skill 的用户输入
+
+- 覆盖不同措辞（正式/口语/中英混合）
+- 覆盖罕见用法（简写、拼写错误、不完整句子）
+- 覆盖不同场景（用户直接说"用 xxx skill"、用户描述需求但未提及 skill 名）
+
+**Should-not-trigger（8-10 条）**：不应该触发 skill 的用户输入
+
+- 其中约 50% 为**近距误触（tricky 负例）**：共享 skill 关键词但属于不同场景
+- 示例：skill 是"PDF 处理"，负例为"帮我分析 PDF 中的财务数据趋势"（应是数据分析 skill 的工作）
+
+### 6.2 用户审核与分集
+
+1. 展示 20 条评估查询给用户
+2. 用户审核：添加遗漏的查询、删除不合理的查询、修正分类错误
+3. 确认后按 60/40 分为训练集（12 条）和测试集（8 条）
+
+### 6.3 run_loop.py 优化循环
+
+```
+python scripts/run_loop.py \
+  --eval-file evals/trigger_evals.json \
+  --skill-path <skill-path> \
+  --max-iterations 5
+```
+
+每轮迭代：
+1. 修改 description
+2. 用训练集评估触发准确率
+3. 记录最佳 description 及得分
+4. 5 轮后输出最优 description
+
+### 6.4 应用最佳 Description
+
+1. 用测试集验证最优 description 的泛化效果
+2. 确认无劣化后更新 SKILL.md 的 description 字段
+3. 如测试集准确率 < 80% → 可能需要重新设计评估查询或调整触发关键词
+
+### 6.5 何时执行
+
+- 用户明确要求"优化触发"或"提高触发准确率"
+- 新 skill 交付前（可选，建议重要 skill 执行）
+- Skill 收到"不触发/误触发"的反馈时
