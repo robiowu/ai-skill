@@ -50,7 +50,7 @@ description: Skill 全生命周期管理元 Skill。覆盖蓝图设计、落地�
 | 8 | 反模式自检 | 执行中对照反模式表，主动纠偏 |
 | 9 | 复杂流程分治 | 大批量、强流程任务使用 subagent 拆解 + 本地 md 追踪进度 |
 
-**原则 9 特别说明**：当被设计的 skill 本身涉及大批量操作、强流程依赖、且不适合纯脚本固化时，应在设计中纳入 subagent 拆解和本地 md 进度追踪机制。详见 `references/complex-workflow-guide.md`。形式化规范：`openspec/specs/complex-workflow-decomposition/spec.md`。
+**原则 9 特别说明**：当被设计的 skill 本身涉及大批量操作、强流程依赖、且不适合纯脚本固化时，应在设计中纳入 subagent 拆解和本地 md 进度追踪机制。详见 `references/complex-workflow-guide.md`。形式化规范：`openspec/specs/complex-workflow-decomposition/spec.md` → 若 openspec/ 不存在，以 references/complex-workflow-guide.md 为准 → ⚠️ 缺失形式化规范
 
 ---
 
@@ -127,7 +127,7 @@ description: Skill 全生命周期管理元 Skill。覆盖蓝图设计、落地�
 ## Stage 2: 落地实现
 
 > 目标：将设计蓝图转化为可执行的 skill 文件。
-> 形式化规范：`openspec/specs/implementation-execution/spec.md`
+> 形式化规范：`openspec/specs/implementation-execution/spec.md` → 若 openspec/ 不存在，以 references/implementation-guide.md 为准 → ⚠️ 缺失形式化规范
 
 ### Phase 2.1: 创建目录结构
 
@@ -233,66 +233,29 @@ Subagent 执行子任务 → 结果摘要写入 md → 主线读取摘要继续�
 ## Stage 3: 整体评估
 
 > 目标：对已实现的 skill 进行执行层面审查，输出质量评分和改进建议。
-> 形式化规范：`openspec/specs/evaluation-review/spec.md`
+> 形式化规范：`openspec/specs/evaluation-review/spec.md` → 若 openspec/ 不存在，以 references/review-checklist.md 为准 → ⚠️ 缺失形式化规范
+
+按以下 6 维度逐项审查，评分后输出评估报告。
+
+> 完整检查清单见 references/review-checklist.md
 
 ### Phase 3.1: 结构审查
-
-逐项检查（详见 `references/review-checklist.md`）：
-
-| # | 检查项 | 严重度 |
-|---|--------|:------:|
-| 3.1.1 | SKILL.md 是否存在且非空 | Error |
-| 3.1.2 | frontmatter 是否包含 name | Error |
-| 3.1.3 | frontmatter 是否包含 description | Error |
-| 3.1.4 | description 是否有效（非空、非模板占位符、含触发关键词） | Warning |
-| 3.1.5 | 是否包含执行流程（编号步骤） | Warning |
-| 3.1.6 | 是否有参考文件索引 | Warning |
+> 检查 SKILL.md 存在性、frontmatter 完整性、描述有效性、执行流程和参考文件索引。共 6 项（3 Error + 3 Warning）。
 
 ### Phase 3.2: 目录审查
-
-| # | 检查项 | 严重度 |
-|---|--------|:------:|
-| 3.2.1 | 目录结构是否符合声明的类型模板 | Warning |
-| 3.2.2 | references/ 中文件是否被 SKILL.md 引用 | Info |
-| 3.2.3 | scripts/ 中是否有 requirements.txt | Info |
-| 3.2.4 | 是否有 README.md | Info |
+> 检查目录结构合规性、死文件、依赖声明、README 存在性。共 4 项（1 Warning + 3 Info）。
 
 ### Phase 3.3: 内容审查
-
-| # | 检查项 | 严重度 |
-|---|--------|:------:|
-| 3.3.1 | SKILL.md 行数是否 < 400（过长应外置） | Warning |
-| 3.3.2 | 是否内嵌大段代码（> 20 行代码块应在 scripts/） | Warning |
-| 3.3.3 | 降级声明是否具体（非笼统的"跳过"） | Error |
-| 3.3.4 | 步骤间输入/输出是否声明 | Warning |
+> 检查行数控制（< 400）、大段代码外置、降级声明具体性、步骤间输入/输出声明。共 4 项（1 Error + 3 Warning）。
 
 ### Phase 3.4: 安全审查
-
-| # | 检查项 | 严重度 |
-|---|--------|:------:|
-| 3.4.1 | 是否包含硬编码的密钥/token/密码 | Error |
-| 3.4.2 | 是否包含任意命令执行且无用户确认 | Error |
-| 3.4.3 | 是否包含对生产环境的破坏性操作且无警告 | Warning |
+> 检查硬编码密钥、任意命令执行、破坏性操作警告。共 3 项（2 Error + 1 Warning）。
 
 ### Phase 3.5: 完备性审查
-
-| # | 检查项 | 严重度 |
-|---|--------|:------:|
-| 3.5.1 | 是否有错误处理/降级路径 | Error |
-| 3.5.2 | Generator 型是否有自校验步骤 | Error |
-| 3.5.3 | Reviewer 型是否有评分公式 | Warning |
-| 3.5.4 | Case-Driven 型是否有 cases/README.md | Error |
+> 检查降级路径、自校验步骤、评分公式、案例 README。共 4 项（3 Error + 1 Warning）。
 
 ### Phase 3.6: 复杂流程分治评估（如适用）
-
-如果被评估 skill 在 Stage 2 中做了复杂流程分治设计，增加以下检查：
-
-| # | 检查项 | 严重度 |
-|---|--------|:------:|
-| 3.6.1 | subagent 拆解是否合理（子任务是否有独立输入/输出契约） | Warning |
-| 3.6.2 | progress.md 模板是否完整（待执行清单 + 进度标记 + 决策记录） | Warning |
-| 3.6.3 | 子任务间依赖是否明确（无循环依赖） | Error |
-| 3.6.4 | 主线是否有读取 md 摘要后继续的流程 | Warning |
+> 仅当 skill 启用了 subagent/md 追踪时执行。检查拆解合理性、模板完整性、依赖清晰性、主线恢复流程。共 4 项（1 Error + 3 Warning）。
 
 ### Phase 3.7: 质量评分
 
@@ -336,63 +299,7 @@ Subagent 执行子任务 → 结果摘要写入 md → 主线读取摘要继续�
 
 ---
 
-## 复杂流程分治设计速查
-
-> 以下为原则 9 的核心操作指引。完整指南见 `references/complex-workflow-guide.md`。
-
-### 何时启用分治
-
-| 场景信号 | 策略 |
-|----------|------|
-| 需要同时分析 ≥3 个独立模块 | A: Subagent 并行拆解 |
-| 主流程超过 8 步 + 每步产生大量输出 | B: progress.md 追踪 |
-| 需要扫描 ≥5 个文件/目录且每个需深度分析 | A: Subagent |
-| 子任务可独立验证、无循环依赖 | A+B: 混合 |
-| 流程固定、只需追踪进度 | B: progress.md |
-
-### progress.md 模板
-
-```markdown
-# {skill-name} 执行进度
-
-## 状态: 🟢 进行中 / 🟡 降级执行 / 🔴 阻塞
-
-## 执行清单
-- [x] Step 1: 环境检查 ✅
-- [x] Step 2: 数据采集 ✅
-- [ ] Step 3: 核心分析 ⏳
-- [ ] Step 4: 结果复核
-- [ ] Step 5: 报告生成
-
-## 决策记录
-| 时间 | 步骤 | 决策 | 原因 |
-|------|------|------|------|
-| ... | ... | ... | ... |
-
-## 中间结果
-<!-- 只记录摘要，不记录完整数据 -->
-- Step 2 采集到 N 条数据，关键特征: ...
-```
-
-### subagent 调用规范
-
-```
-task(
-  description="简短描述子任务",
-  prompt="目标: ... 
-作用域: ... 
-深度: quick/medium/deep
-已知: ...
-输出格式: ...",
-  subagent_type="explore/general"
-)
-```
-
-**关键约束**：
-- 子任务必须有明确的输入/输出契约
-- 子任务结果不可见给用户，必须在主线做摘要
-- 不并行重复探索同一区域
-- 子任务结果先验证再采纳
+> 完整设计速查见 references/complex-workflow-guide.md §设计速查
 
 ---
 
